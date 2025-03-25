@@ -8,7 +8,7 @@ const Inventory = () => {
     const [goods, setGoods] = useState([]);
     const [newGood, setNewGood] = useState({ name: '', balance: '' });
 
-    // получаем список товаров при загрузке страницы
+    // получаем список товаров при загрузке страницы/
     useEffect(() => {
         if (!token) return;
 
