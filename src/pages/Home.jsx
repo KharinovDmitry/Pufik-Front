@@ -8,6 +8,13 @@ const Home = () => {
         <div className="home-container">
             <h1>Добро пожаловать</h1>
 
+            <nav>
+                <ul>
+                    <li><Link to="/cart">Корзина</Link></li>
+                    <li><Link to="/inventory">Инвентарь</Link></li>
+                </ul>
+            </nav>
+
             <TelegramAuthButton
                 onError={setError}
                 onSuccess={(challenge) => console.log('Challenge received:', challenge)}
