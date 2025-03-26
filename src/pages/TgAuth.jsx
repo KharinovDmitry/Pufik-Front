@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
+import { CartService } from '../services/Cart';
 
 const API_HOST = 'http://45.83.143.192:8080';
 const API_ENDPOINTS = {
@@ -29,7 +30,7 @@ const AuthContainer = styled.div`
   background: linear-gradient(135deg, #f8fafc, #e2e8f0);
 `;
 
-const AuthCard = styled.div`
+const SuccessCard = styled.div`
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
@@ -37,39 +38,33 @@ const AuthCard = styled.div`
   max-width: 500px;
   width: 100%;
   text-align: center;
-  transition: all 0.3s ease;
   animation: ${fadeIn} 0.5s ease-out;
-`;
-
-const SuccessCard = styled(AuthCard)`
   border-top: 4px solid #10b981;
 `;
 
-const AuthTitle = styled.h2`
-  color: #1e293b;
-  margin-bottom: 1.5rem;
-  font-size: 1.75rem;
-  font-weight: 600;
+const UserInfoCard = styled.div`
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: left;
 `;
 
-const StatusMessage = styled.div`
+const InfoRow = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  min-height: 3rem;
-  color: ${props => props.$isError ? '#dc2626' : '#1e293b'};
-  font-size: 1.1rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
 `;
 
-const Spinner = styled.div`
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 3px solid rgba(14, 165, 233, 0.3);
-  border-radius: 50%;
-  border-top-color: #0ea5e9;
-  animation: ${spin} 1s ease-in-out infinite;
+const InfoLabel = styled.span`
+  color: #6c757d;
+  font-weight: 500;
+`;
+
+const InfoValue = styled.span`
+  color: #212529;
+  font-weight: ${props => props.$highlight ? '600' : '400'};
+  ${props => props.$highlight && 'color: #0d6efd;'}
 `;
 
 const Checkmark = styled.svg`
@@ -97,6 +92,54 @@ const Checkmark = styled.svg`
   }
 `;
 
+const SuccessButton = styled.button`
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+  
+  &:hover {
+    background: #059669;
+    transform: translateY(-1px);
+  }
+`;
+
+const AuthCard = styled.div`
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 2.5rem;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  transition: all 0.3s ease;
+`;
+
+const StatusMessage = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  min-height: 3rem;
+  color: ${props => props.$isError ? '#dc2626' : '#1e293b'};
+  font-size: 1.1rem;
+`;
+
+const Spinner = styled.div`
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 3px solid rgba(14, 165, 233, 0.3);
+  border-radius: 50%;
+  border-top-color: #0ea5e9;
+  animation: ${spin} 1s ease-in-out infinite;
+`;
+
 const ActionButtons = styled.div`
   display: flex;
   gap: 1rem;
@@ -113,16 +156,6 @@ const Button = styled.button`
   border: none;
 `;
 
-const SuccessButton = styled(Button)`
-  background: #10b981;
-  color: white;
-  
-  &:hover {
-    background: #059669;
-    transform: translateY(-1px);
-  }
-`;
-
 const TgAuthPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -133,6 +166,7 @@ const TgAuthPage = () => {
         isInitialCheck: true,
         isSuccess: false
     });
+    const [userData, setUserData] = useState(null);
     const [retryCount, setRetryCount] = useState(0);
 
     const query = new URLSearchParams(location.search);
@@ -169,17 +203,29 @@ const TgAuthPage = () => {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
 
-                const { token } = await res.json();
+                const { token, login, phone, user_uuid, role } = await res.json();
 
                 if (token) {
+                    // Сохраняем данные пользователя
+                    const userData = { token, login, phone, user_uuid, role };
                     localStorage.setItem('auth_token', token);
+                    localStorage.setItem('user_data', JSON.stringify(userData));
+                    setUserData(userData);
+
                     setStatus({
                         message: 'Авторизация успешно завершена!',
                         isError: false,
                         isLoading: false,
                         isSuccess: true
                     });
-                    // Остаемся на этой странице для отображения успеха
+
+                    try {
+                        const updatedCart = await CartService.syncCart();
+                        // Можно добавить обновление состояния через контекст или другие методы
+                    } catch (error) {
+                        console.error('Ошибка синхронизации корзины:', error);
+                        // Можно добавить обработку ошибки, но не прерывать поток
+                    }
                 } else {
                     setStatus({
                         message: 'Авторизация еще не завершена. Пожалуйста, завершите процесс в Telegram.',
@@ -190,7 +236,6 @@ const TgAuthPage = () => {
                 }
             } catch (error) {
                 console.error('Auth verification error:', error);
-
                 const attemptsLeft = MAX_RETRIES - retryCount - 1;
                 const errorMessage = attemptsLeft > 0
                     ? `Попытка ${retryCount + 1} из ${MAX_RETRIES}...`
@@ -218,7 +263,7 @@ const TgAuthPage = () => {
         navigate('/', { replace: true });
     };
 
-    if (status.isSuccess) {
+    if (status.isSuccess && userData) {
         return (
             <AuthContainer>
                 <SuccessCard>
@@ -226,15 +271,28 @@ const TgAuthPage = () => {
                         <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
                         <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                     </Checkmark>
-                    <AuthTitle>Успешная авторизация!</AuthTitle>
-                    <StatusMessage>
-                        <p>Вы успешно авторизовались через Telegram</p>
-                    </StatusMessage>
-                    <ActionButtons>
-                        <SuccessButton onClick={handleContinue}>
-                            Продолжить
-                        </SuccessButton>
-                    </ActionButtons>
+                    <h2 style={{ color: '#1e293b', marginBottom: '1.5rem', fontSize: '1.75rem' }}>
+                        Добро пожаловать, {userData.login}!
+                    </h2>
+
+                    <UserInfoCard>
+                        <InfoRow>
+                            <InfoLabel>Логин:</InfoLabel>
+                            <InfoValue $highlight>{userData.login}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                            <InfoLabel>Телефон:</InfoLabel>
+                            <InfoValue>{userData.phone || 'Не указан'}</InfoValue>
+                        </InfoRow>
+                        <InfoRow>
+                            <InfoLabel>Роль:</InfoLabel>
+                            <InfoValue>{userData.role}</InfoValue>
+                        </InfoRow>
+                    </UserInfoCard>
+
+                    <SuccessButton onClick={handleContinue}>
+                        Перейти в приложение
+                    </SuccessButton>
                 </SuccessCard>
             </AuthContainer>
         );
@@ -243,7 +301,9 @@ const TgAuthPage = () => {
     return (
         <AuthContainer>
             <AuthCard>
-                <AuthTitle>Авторизация через Telegram</AuthTitle>
+                <h2 style={{ color: '#1e293b', marginBottom: '1.5rem', fontSize: '1.75rem' }}>
+                    Авторизация через Telegram
+                </h2>
 
                 <StatusMessage $isError={status.isError}>
                     {status.isLoading && <Spinner aria-hidden="true" />}

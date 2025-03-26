@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
-import {API_GATEWAY} from "../config";
 
 // Анимация спиннера
 const spin = keyframes`
@@ -69,19 +68,26 @@ const TelegramIcon = styled.div`
   }
 `;
 
-const UserBadge = styled.div`
+const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #333;
-  font-weight: 500;
-  padding: 10px 15px;
-  background: #f0f8ff;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #f8f9fa;
   border-radius: 50px;
+  font-weight: 500;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+`;
+
+const UserLogin = styled.span`
+  font-weight: 600;
+  color: #0d6efd;
 `;
 
 const TelegramAuthButton = ({
                                 botName = 'PUFIK_ID_BOT',
+                                apiHost = 'http://45.83.143.192:8080',
                                 endpoints = {
                                     GET_CHALLENGE: '/api/auth/telegram/challenge',
                                     VERIFY_AUTH: '/api/auth/telegram/token'
@@ -90,20 +96,22 @@ const TelegramAuthButton = ({
                                 onSuccess
                             }) => {
     const [loading, setLoading] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userData, setUserData] = useState(null);
     const navigate = useNavigate();
 
-    // Проверяем авторизацию при монтировании компонента
+    // Проверяем авторизацию при монтировании
     useEffect(() => {
-        const token = localStorage.getItem('auth_token');
-        setIsAuthenticated(!!token);
+        const storedUserData = localStorage.getItem('user_data');
+        if (storedUserData) {
+            setUserData(JSON.parse(storedUserData));
+        }
     }, []);
 
     const handleTelegramAuth = async () => {
         setLoading(true);
 
         try {
-            const challengeUrl = `http://45.83.143.192:8080${endpoints.GET_CHALLENGE}`;
+            const challengeUrl = `${apiHost}${endpoints.GET_CHALLENGE}`;
             const response = await fetch(challengeUrl, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,12 +136,35 @@ const TelegramAuthButton = ({
         }
     };
 
-    // Если пользователь авторизован, возвращаем null (ничего не рендерим)
-    if (isAuthenticated) {
-        return null;
+    const handleLogout = () => {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        setUserData(null);
+        // Можно добавить вызов API для логаута
+    };
+
+    // Если пользователь авторизован, показываем его данные
+    if (userData) {
+        return (
+            <UserInfo>
+                <span>Добро пожаловать, <UserLogin>{userData.login}</UserLogin></span>
+                <button
+                    onClick={handleLogout}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#dc3545',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                    }}
+                >
+                    Выйти
+                </button>
+            </UserInfo>
+        );
     }
 
-    // Рендерим кнопку только для неавторизованных пользователей
+    // Если не авторизован, показываем кнопку входа
     return (
         <AuthButton
             onClick={handleTelegramAuth}
