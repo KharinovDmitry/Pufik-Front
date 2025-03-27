@@ -1,17 +1,22 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import TgAuth from './pages/TgAuth';
+import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/TgAuthContext';
+import Home from './Pages/Home';
+import AuthPage from './Pages/Auth';
 
-const App = () => {
-  return (
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/tg-auth" element={<TgAuth />} />
-        </Routes>
-      </Router>
-  );
-};
+function App() {
+    return (
+        <Router>
+            <AuthProvider>
+                <CartProvider>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/auth" element={<AuthPage />} />
+                    </Routes>
+                </CartProvider>
+            </AuthProvider>
+        </Router>
+    );
+}
 
-export default App;
+export default App
