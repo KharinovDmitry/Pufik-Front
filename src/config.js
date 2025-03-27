@@ -6,6 +6,8 @@ export const API_ENDPOINTS = {
     },
     AUTH: {
         CHALLENGE: '/api/auth/telegram/challenge',
-        VERIFY: '/api/auth/telegram/token'
+        TOKEN: '/api/auth/telegram/token'
     }
 };
+
+export const TG_BOT_NAME = 'PUFIK_ID_BOT'

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import { useInventory } from '../../hooks/useInventory';
 import { useCartActions } from '../../hooks/useCart';
 import InventoryGrid from '../../components/Inventory/InventoryGrid';
@@ -8,28 +8,21 @@ import {
     ControlsContainer,
     FilterButton,
     SortSelect,
-    StatusMessage
+    StatusMessage,
+    CartSummary,
+    CartSummaryButton
 } from './styles';
-import {useAuth} from "../../context/TgAuthContext";
+import { useAuth } from "../../context/TgAuthContext";
 import TgAuthButton from "../../components/TgAuthButton";
+import CartButton from "../../components/Cart/CartButton";
+import CartModal from "../../components/Cart/CartModal";
 
 const Home = () => {
     const { inventory, loading, error, categories } = useInventory();
-    const { addItem } = useCartActions();
+    const { addItem, items, totalSum } = useCartActions();
     const [activeFilter, setActiveFilter] = useState('all');
     const [sortBy, setSortBy] = useState('price-asc');
-
     const { user } = useAuth();
-    const { syncCart } = useCartActions();
-
-    useEffect(() => {
-        if (user) {
-            const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
-            syncCart(localCart).then(() => {
-                localStorage.removeItem('local_cart');
-            });
-        }
-    }, [syncCart, user]);
 
     const handleAddToCart = (inventoryId) => {
         addItem(inventoryId);
@@ -57,13 +50,33 @@ const Home = () => {
 
     return (
         <PageContainer>
-            <PageTitle>Аренда инвентаря</PageTitle>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px'
+            }}>
+                <PageTitle>Аренда инвентаря</PageTitle>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <TgAuthButton />
+                    <CartButton />
+                </div>
+            </div>
+
+            {/* Краткая сводка корзины */}
+            {items.length > 0 && (
+                <CartSummary>
+                    <div>
+                        <span>В корзине: {items.reduce((sum, item) => sum + item.count, 0)} шт.</span>
+                        <span>На сумму: {totalSum} ₽</span>
+                    </div>
+                    <CartSummaryButton onClick={() => console.log('Переход к оформлению')}>
+                        Оформить
+                    </CartSummaryButton>
+                </CartSummary>
+            )}
 
             <ControlsContainer>
-                <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-                    <TgAuthButton/>
-                </div>
-
                 <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
                     <FilterButton
                         $active={activeFilter === 'all'}
@@ -96,6 +109,8 @@ const Home = () => {
                 onAddToCart={handleAddToCart}
                 loading={loading}
             />
+
+            <CartModal />
         </PageContainer>
     );
 };

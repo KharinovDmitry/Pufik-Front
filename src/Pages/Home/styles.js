@@ -117,3 +117,39 @@ export const BackLink = styled(Link)`
     margin-right: 8px;
   }
 `;
+
+export const CartSummary = styled.div`
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    
+    div {
+        display: flex;
+        gap: 16px;
+    }
+    
+    span {
+        font-size: 0.9rem;
+        color: #333;
+    }
+`;
+
+export const CartSummaryButton = styled.button`
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    
+    &:hover {
+        background: #45a049;
+    }
+`;

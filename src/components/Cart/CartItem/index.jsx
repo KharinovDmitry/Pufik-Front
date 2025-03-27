@@ -1,4 +1,3 @@
-// components/cart/CartItem/index.jsx
 import React from 'react';
 import {
     ItemContainer,
@@ -7,12 +6,21 @@ import {
     ItemPrice,
     ItemActions,
     QuantityButton,
-    RemoveButton
+    RemoveButton,
+    AvailabilityInfo
 } from './styles';
 
-const Index = ({ item, highlighted, onRemove, onQuantityChange }) => {
+const CartItem = ({
+                      item,
+                      highlighted,
+                      onRemove,
+                      onQuantityChange,
+                      maxQuantity,
+                  }) => {
     return (
-        <ItemContainer $highlighted={highlighted}>
+        <ItemContainer
+            $highlighted={highlighted}
+        >
             <ItemInfo>
                 <ItemName>{item.inventory.name}</ItemName>
                 <ItemPrice>{item.inventory.cost_per_day} ₽/день</ItemPrice>
@@ -26,12 +34,19 @@ const Index = ({ item, highlighted, onRemove, onQuantityChange }) => {
                     >
                         −
                     </QuantityButton>
-                    <span style={{ margin: '0 10px', minWidth: '20px', textAlign: 'center' }}>
-            {item.count}
-          </span>
+                    <span style={{
+                        margin: '0 10px',
+                        minWidth: '20px',
+                        textAlign: 'center',
+                        color:  'inherit',
+                        fontWeight: 'normal'
+                    }}>
+                        {item.count}
+                    </span>
                     <QuantityButton
-                        onClick={() => onQuantityChange(item.count + 1)}
+                        onClick={() => onQuantityChange(Math.min(maxQuantity, item.count + 1))}
                         aria-label="Увеличить количество"
+                        disabled={item.count >= maxQuantity}
                     >
                         +
                     </QuantityButton>
@@ -47,4 +62,4 @@ const Index = ({ item, highlighted, onRemove, onQuantityChange }) => {
     );
 };
 
-export default Index;
+export default CartItem;

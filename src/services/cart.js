@@ -22,24 +22,39 @@ export const CartService = {
         }
     },
 
-    async addItem(inventoryId) {
-        try {
-            const token = localStorage.getItem('auth_token');
-            const headers = {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            };
+    async addItem(inventoryId, count = 1) {
+        const token = localStorage.getItem('auth_token');
+        const url = token ?
+            `${API_GATEWAY}/api/order/cart/add` :
+            null;
 
-            const response = await fetch(`${API_GATEWAY}/api/order/cart/add`, {
+        if (url) {
+            // Запрос к бэкенду
+            const response = await fetch(url, {
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ inventory_id: inventoryId })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({inventory_uuid: inventoryId, count})
             });
+            return this.getCart();
+        } else {
+            // Логика для локального хранилища
+            return new Promise((resolve) => {
+                const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
+                const existingItem = localCart.find(i => i.inventory_id === inventoryId);
 
-            return await handleResponse(response);
-        } catch (error) {
-            console.error('Add to cart error:', error);
-            throw error;
+                const updatedCart = existingItem ?
+                    localCart.map(i =>
+                        i.inventory_id === inventoryId ?
+                            {...i, count: i.count + count} : i
+                    ) :
+                    [...localCart, {inventory_id: inventoryId, count}];
+
+                localStorage.setItem('local_cart', JSON.stringify(updatedCart));
+                resolve(updatedCart);
+            });
         }
     },
 
@@ -55,7 +70,7 @@ export const CartService = {
                 body: JSON.stringify({ cart_item_id: cartItemId })
             });
 
-            return await handleResponse(response);
+            return this.getCart();
         } catch (error) {
             console.error('Remove from cart error:', error);
             throw error;

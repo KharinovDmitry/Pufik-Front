@@ -6,6 +6,7 @@ export const useCartActions = () => {
     const {
         items,
         isCartOpen,
+        highlightItem,
         actions: {
             setCart,
             addItem: contextAddItem,
@@ -23,10 +24,19 @@ export const useCartActions = () => {
     const addItem = async (inventoryId) => {
         try {
             startLoading();
+
             const updatedCart = await CartService.addItem(inventoryId);
             setCart(updatedCart);
 
-            // Авто-открытие корзины при добавлении первого товара
+            // Безопасное получение добавленного элемента
+            const addedItem = updatedCart.find(item =>
+                item.inventory && item.inventory.id === inventoryId
+            );
+
+            if (addedItem) {
+                highlightItem(addedItem.uuid);
+            }
+
             if (!isCartOpen && items.length === 0) {
                 toggleCart();
             }

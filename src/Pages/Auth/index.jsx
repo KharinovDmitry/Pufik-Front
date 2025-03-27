@@ -1,39 +1,61 @@
-import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../context/TgAuthContext';
-import TgAuthButton from '../../components/TgAuthButton';
-import {API_GATEWAY} from "../../config";
+import {useEffect, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {useAuth} from "../../context/TgAuthContext";
 
 const AuthPage = () => {
-    const { user, login } = useAuth();
+    const { user, login, loading } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const token = searchParams.get('token');
+    const challenge = searchParams.get('challenge');
+    const [polling, setPolling] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            // Здесь запрос к вашему API для верификации токена
-            fetch(`${API_GATEWAY}/api/auth/telegram/verify?token=${token}`)
-                .then(res => res.json())
-                .then(data => {
-                    login(data.user);
-                    navigate('/');
-                });
+        if (challenge && !user && !polling) {
+            setPolling(true);
+
+            const verifyToken = async () => {
+                try {
+                    const response = await fetch(
+                        `http://45.83.143.192:8080/api/auth/telegram/verify?challenge=${challenge}`
+                    );
+                    const data = await response.json();
+
+                    if (data.user && data.token) {
+                        login(data);
+                        navigate('/');
+                    } else {
+                        // Повторяем проверку через 2 секунды
+                        setTimeout(verifyToken, 2000);
+                    }
+                } catch (error) {
+                    console.error('Token verification failed:', error);
+                    setTimeout(verifyToken, 2000);
+                }
+            };
+
+            verifyToken();
         }
-    }, [token]);
+    }, [challenge, user, login, navigate, polling]);
 
     return (
         <div className="auth-page">
             {user ? (
                 <div className="user-info">
                     <h2>Вы авторизованы</h2>
-                    <p>Логин: {user.login}</p>
-                    <p>Телефон: {user.phone}</p>
-                    <p>Роль: {user.role}</p>
                     <button onClick={() => navigate('/')}>Продолжить</button>
                 </div>
             ) : (
-                <TgAuthButton />
+                <div className="auth-message">
+                    <h2>Авторизация</h2>
+                    {loading || polling ? (
+                        <>
+                            <p>Ожидаем подтверждения авторизации...</p>
+                            <div className="spinner"></div>
+                        </>
+                    ) : (
+                        <p>Пожалуйста, войдите через Telegram</p>
+                    )}
+                </div>
             )}
         </div>
     );

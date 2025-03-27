@@ -8,6 +8,10 @@ export const ItemContainer = styled.div`
   border-bottom: 1px solid #eee;
   background-color: ${props => props.$highlighted ? '#f8f9fa' : 'transparent'};
   transition: background 0.3s ease;
+  background: ${props => props.$unavailable ? '#fff9f9' : 'white'};
+    border-left: 4px solid ${props =>
+    props.$highlighted ? '#4CAF50' :
+        props.$unavailable ? '#ff4444' : 'transparent'};
 `;
 
 // Блок с информацией о товаре
@@ -19,6 +23,8 @@ export const ItemInfo = styled.div`
 export const ItemName = styled.h4`
   margin: 0 0 4px 0;
   font-size: 16px;
+  margin-bottom: 4px;
+  color: ${props => props.$unavailable ? '#ff4444' : 'inherit'};
 `;
 
 // Цена товара
@@ -42,6 +48,10 @@ export const QuantityButton = styled.button`
   height: 28px;
   border-radius: 4px;
   cursor: pointer;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 // Кнопка удаления
@@ -52,4 +62,10 @@ export const RemoveButton = styled.button`
   cursor: pointer;
   font-size: 12px;
   margin-top: 8px;
+`;
+
+export const AvailabilityInfo = styled.p`
+    color: #ff4444;
+    font-size: 0.8rem;
+    margin: 4px 0 0;
 `;
