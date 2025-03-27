@@ -62,7 +62,6 @@ const InventoryCard = styled.div`
   border: 1px solid #e9ecef;
   display: flex;
   flex-direction: column;
-  height: 100%;
 
   &:hover {
     transform: translateY(-4px);
