@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import { useInventory } from '../../hooks/useInventory';
 import { useCartActions } from '../../hooks/useCart';
 import InventoryGrid from '../../components/Inventory/InventoryGrid';
+
 import {
     PageContainer,
     PageTitle,
@@ -16,6 +17,8 @@ import { useAuth } from "../../context/TgAuthContext";
 import TgAuthButton from "../../components/TgAuthButton";
 import CartButton from "../../components/Cart/CartButton";
 import CartModal from "../../components/Cart/CartModal";
+import MyOrders from "../../components/OrdersButton";
+
 
 const Home = () => {
     const { inventory, loading, error, categories } = useInventory();
@@ -58,6 +61,7 @@ const Home = () => {
             }}>
                 <PageTitle>Аренда инвентаря</PageTitle>
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <MyOrders />
                     <TgAuthButton />
                     <CartButton />
                 </div>
