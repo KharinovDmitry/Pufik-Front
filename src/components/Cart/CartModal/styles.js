@@ -53,10 +53,10 @@ export const EmptyMessage = styled.div`
 `;
 
 export const ItemsContainer = styled.div`
-    overflow-y: auto;
+    overflow-y: auto; 
     flex-grow: 1;
-    margin: 0 -20px;
     padding: 0 20px;
+    max-height: 320px; 
 `;
 
 export const WarningMessage = styled.div`
