@@ -49,7 +49,25 @@ const CartModal = () => {
 
     if (!isCartOpen) return null;
 
+    const isValidDate = (date) => {
+        return date instanceof Date && !isNaN(date);
+    };
+
     const createOrder = async () => {
+        // Проверка на заполненность полей
+        if (!address || !fromDate || !toDate) {
+            alert("Пожалуйста, заполните все поля: адрес и даты начала/окончания аренды.");
+            return;
+        }
+
+        const fromDateObj = new Date(fromDate);
+        const toDateObj = new Date(toDate);
+
+        // Проверка корректности дат
+        if (!isValidDate(fromDateObj) || !isValidDate(toDateObj)) {
+            alert("Пожалуйста, введите корректные даты начала и окончания аренды.");
+            return;
+        }
         const token = localStorage.getItem("auth_token");
         if (!token) {
             alert("Необходимо войти в аккаунт");
@@ -59,15 +77,15 @@ const CartModal = () => {
         console.log("fromDate:", fromDate);
         console.log("toDate:", toDate);
 
-
-        const inventories = items.map(item => item.inventory.uuid);
-
-        const body = { address,
-            fromDate: formatDate(new Date(fromDate)),
-            toDate: formatDate(new Date(toDate)),
-            inventories};
-
         try {
+            const inventories = items.map(item => item.inventory.uuid);
+
+            const body = { address,
+                fromDate: formatDate(new Date(fromDate)),
+                toDate: formatDate(new Date(toDate)),
+                inventories};
+
+        
             const response = await fetch(`${API_GATEWAY}/api/order/create`, {
                 method: "POST",
                 headers: {
