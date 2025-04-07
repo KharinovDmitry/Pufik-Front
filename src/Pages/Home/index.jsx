@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import { useInventory } from '../../hooks/useInventory';
 import { useCartActions } from '../../hooks/useCart';
 import InventoryGrid from '../../components/Inventory/InventoryGrid';
+import { useCart } from '../../context/CartContext';
 
 import {
     PageContainer,
@@ -26,6 +27,7 @@ const Home = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [sortBy, setSortBy] = useState('price-asc');
     const { user } = useAuth();
+    const { isCartOpen, actions: { toggleCart } } = useCart();
 
     const handleAddToCart = (inventoryId) => {
         addItem(inventoryId);
@@ -74,7 +76,7 @@ const Home = () => {
                         <span>В корзине: {items.reduce((sum, item) => sum + item.count, 0)} шт.</span>
                         <span>На сумму: {totalSum} ₽</span>
                     </div>
-                    <CartSummaryButton onClick={() => console.log('Переход к оформлению')}>
+                    <CartSummaryButton onClick={toggleCart}>
                         Оформить
                     </CartSummaryButton>
                 </CartSummary>
