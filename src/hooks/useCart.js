@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { useCart } from '../context/CartContext';
 import { CartService } from '../services/cart';
-import { useAuth } from '../context/TgAuthContext'; 
+import { useAuth } from '../context/TgAuthContext';
 
 
 export const useCartActions = () => {
