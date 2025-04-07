@@ -56,7 +56,7 @@ export const ItemsContainer = styled.div`
     overflow-y: auto; 
     flex-grow: 1;
     padding: 0 20px;
-    max-height: 320px; 
+    max-height: 305px; 
 `;
 
 export const WarningMessage = styled.div`
