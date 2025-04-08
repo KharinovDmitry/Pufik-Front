@@ -11,7 +11,7 @@ import {
     SummaryRow,
     WarningMessage,
     ItemsContainer,
-    ModalContent
+    ModalContent, FormWrapper, FormGroup, FormLabel, FormInput
 } from './styles';
 import {API_GATEWAY} from "../../../config";
 
@@ -157,33 +157,35 @@ const CartModal = () => {
                                     <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>{totalSum} ₽</span>
                                 </SummaryRow>
 
-                                <div style={{ marginTop: '20px' }}>
-                                    <label>Адрес:</label>
-                                    <input
-                                        type="text"
-                                        value={address}
-                                        onChange={(e) => setAddress(e.target.value)}
-                                        placeholder="Введите адрес"
-                                    />
-                                </div>
+                                <FormWrapper>
+                                    <FormGroup>
+                                        <FormLabel>Адрес:</FormLabel>
+                                        <FormInput
+                                            type="text"
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            placeholder="Введите адрес"
+                                        />
+                                    </FormGroup>
 
-                                <div style={{ marginTop: '10px' }}>
-                                    <label>Дата начала аренды:</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={fromDate}
-                                        onChange={(e) => setFromDate(e.target.value)}
-                                    />
-                                </div>
+                                    <FormGroup>
+                                        <FormLabel>Дата начала аренды:</FormLabel>
+                                        <FormInput
+                                            type="datetime-local"
+                                            value={fromDate}
+                                            onChange={(e) => setFromDate(e.target.value)}
+                                        />
+                                    </FormGroup>
 
-                                <div style={{ marginTop: '10px' }}>
-                                    <label>Дата окончания аренды:</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={toDate}
-                                        onChange={(e) => setToDate(e.target.value)}
-                                    />
-                                </div>
+                                    <FormGroup>
+                                        <FormLabel>Дата окончания аренды:</FormLabel>
+                                        <FormInput
+                                            type="datetime-local"
+                                            value={toDate}
+                                            onChange={(e) => setToDate(e.target.value)}
+                                        />
+                                    </FormGroup>
+                                </FormWrapper>
 
                                 <CheckoutButton
                                     onClick={createOrder}

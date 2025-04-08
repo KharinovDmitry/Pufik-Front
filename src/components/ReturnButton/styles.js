@@ -8,6 +8,8 @@ export const ReturnButton = styled.button`
     border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
+    width: 110px;
+    height: 40px;
     transition: background 0.3s ease;
     
     &:hover {

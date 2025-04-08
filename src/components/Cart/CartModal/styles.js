@@ -18,7 +18,7 @@ export const ModalContainer = styled.div`
     border-radius: 12px;
     width: 90%;
     max-width: 500px;
-    max-height: 80vh;
+    max-height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -78,7 +78,7 @@ export const SummaryRow = styled.div`
 export const CheckoutButton = styled.button`
     width: 100%;
     padding: 14px;
-    background: ${props => props.disabled ? '#ccc' : '#4CAF50'};
+    background: ${props => props.disabled ? '#ccc' : '#0d6efd'};
     color: white;
     border: none;
     border-radius: 6px;
@@ -88,6 +88,38 @@ export const CheckoutButton = styled.button`
     transition: background 0.2s;
 
     &:hover {
-        background: ${props => props.disabled ? '#ccc' : '#45a049'};
+        background: ${props => props.disabled ? '#ccc' : '#0d6efd'};
+    }
+`;
+
+export const FormWrapper = styled.div`
+    margin-top: 20px;
+`;
+
+export const FormGroup = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+`;
+
+export const FormLabel = styled.label`
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+`;
+
+export const FormInput = styled.input`
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+
+    &:focus {
+        border-color: #0d6efd;
+        outline: none;
     }
 `;
