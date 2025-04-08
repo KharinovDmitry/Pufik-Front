@@ -12,18 +12,22 @@ import {
     ActionButton,
 } from "./styles";
 
+import BackButton from "../../components/ReturnButton";
+
 const Orders = () => {
     const [orders, setOrders] = useState([]);
-    const role = localStorage.getItem("role");
-    const token = localStorage.getItem("token");
-    const apiUrl = "/api/order";
+    const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+    const role = userData.role;
+    const userPhone = userData.phone;
+    const token = localStorage.getItem("auth_token");
+    const apiUrl = "http://45.83.143.192/api/order";
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem('auth_token');
 
         if (!token) {
             const checkTokenInterval = setInterval(() => {
-                const newToken = localStorage.getItem("token");
+                const newToken = localStorage.getItem('auth_token');
                 if (newToken) {
                     clearInterval(checkTokenInterval);
                     fetchOrders(newToken);
@@ -43,9 +47,14 @@ const Orders = () => {
         }
 
         try {
-            const role = localStorage.getItem("role");
-            const response = await fetch(`${apiUrl}/${role === "customer" ? "all" : "my"}`, {
-                headers: { Authorization: `Bearer ${token}` },
+            const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+            const role = userData.role;
+            const isCustomer = role?.toLowerCase() === "customer";
+            const response = await fetch(`${apiUrl}/${isCustomer ? "all" : "my"}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
             });
 
             if (!response.ok) throw new Error("Ошибка при загрузке заказов");
@@ -59,13 +68,22 @@ const Orders = () => {
     };
 
     const handleOrderAction = async (id, action) => {
+        const method = action === "cancel" ? "DELETE" : "POST";
+        const basePath = action === "cancel" ? `${apiUrl}s` : apiUrl; // orders для cancel
+        const endpoint = `${basePath}/${id}/${action}`;
+
         try {
-            const response = await fetch(`${apiUrl}/${id}/${action}`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
+            const response = await fetch(endpoint, {
+                method,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
             });
+
             if (!response.ok) throw new Error("Ошибка при обновлении заказа");
-            fetchOrders();
+
+            await fetchOrders(token);
         } catch (error) {
             console.error(error);
             alert("Ошибка при обновлении заказа. Пожалуйста, попробуйте позже.");
@@ -78,7 +96,10 @@ const Orders = () => {
 
     return (
         <StyledPageContainer>
-            <StyledPageTitle>Мои Заказы</StyledPageTitle>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                <StyledPageTitle>Мои Заказы</StyledPageTitle>
+                <BackButton />
+            </div>
             {orders.length === 0 ? (
                 <StyledStatusMessage>Заказов пока нет</StyledStatusMessage>
             ) : (
@@ -93,24 +114,30 @@ const Orders = () => {
                                 <span>Адрес: {order.address}</span>
                                 <span>Сумма: {order.sum}</span>
                                 <span>Статус: {order.status}</span>
-                                {role === "customer" && <span>Номер покупателя: {order.buyer.phone}</span>}
-                                {role === "customer" && (
+                                {role === "buyer" && <span>Номер: {userPhone}</span>}
+                                {role === "buyer" && (
                                     <ActionButtons>
-                                        <ActionButton onClick={() => handleOrderAction(order.uuid, "cancel")}>
-                                            Отменить
-                                        </ActionButton>
-                                        <ActionButton onClick={() => handleOrderAction(order.uuid, "confirm")}>
-                                            Подтвердить
-                                        </ActionButton>
-                                        <ActionButton onClick={() => handleOrderAction(order.uuid, "close")}>
-                                            Закрыть
-                                        </ActionButton>
+                                        {order.status === "created" && (
+                                            <>
+                                                <ActionButton onClick={() => handleOrderAction(order.uuid, "confirm")}>
+                                                    Подтвердить
+                                                </ActionButton>
+                                                <ActionButton onClick={() => handleOrderAction(order.uuid, "cancel")}>
+                                                    Отменить
+                                                </ActionButton>
+                                            </>
+                                        )}
+                                        {order.status === "confirmed" && (
+                                            <ActionButton onClick={() => handleOrderAction(order.uuid, "close")}>
+                                                Закрыть
+                                            </ActionButton>
+                                        )}
                                     </ActionButtons>
                                 )}
                             </OrderInfo>
                             <InventoryList>
                                 {order.inventories.map((item) => (
-                                    <InventoryItem key={item.id}>
+                                    <InventoryItem key={item.uuid}>
                                         <span>{item.name}</span>
                                         <span>Стоимость в день: {item.cost_per_day} р.</span>
                                     </InventoryItem>

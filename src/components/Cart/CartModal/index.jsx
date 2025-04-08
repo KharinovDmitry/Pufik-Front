@@ -11,8 +11,9 @@ import {
     SummaryRow,
     WarningMessage,
     ItemsContainer,
-    ModalContent
+    ModalContent, FormWrapper, FormGroup, FormLabel, FormInput
 } from './styles';
+import {API_GATEWAY} from "../../../config";
 
 const CartModal = () => {
     const {
@@ -22,7 +23,15 @@ const CartModal = () => {
         actions: { toggleCart, removeItem, updateQuantity }
     } = useCart();
 
+
+    const formatDate = (date) => {
+        return date.toISOString();
+    };
+
     const [unavailableItems, setUnavailableItems] = useState([]);
+    const [address, setAddress] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
 
     useEffect(() => {
         if (isCartOpen) {
@@ -39,6 +48,66 @@ const CartModal = () => {
     );
 
     if (!isCartOpen) return null;
+
+    const isValidDate = (date) => {
+        return date instanceof Date && !isNaN(date);
+    };
+
+    const createOrder = async () => {
+        // Проверка на заполненность полей
+        if (!address || !fromDate || !toDate) {
+            alert("Пожалуйста, заполните все поля: адрес и даты начала/окончания аренды.");
+            return;
+        }
+
+        const fromDateObj = new Date(fromDate);
+        const toDateObj = new Date(toDate);
+
+        // Проверка корректности дат
+        if (!isValidDate(fromDateObj) || !isValidDate(toDateObj)) {
+            alert("Пожалуйста, введите корректные даты начала и окончания аренды.");
+            return;
+        }
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            alert("Необходимо войти в аккаунт");
+            return;
+        }
+
+        console.log("fromDate:", fromDate);
+        console.log("toDate:", toDate);
+
+        try {
+            const inventories = items.map(item => item.inventory.uuid);
+
+            const body = { address,
+                fromDate: formatDate(new Date(fromDate)),
+                toDate: formatDate(new Date(toDate)),
+                inventories};
+
+        
+            const response = await fetch(`${API_GATEWAY}/api/order/create`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            alert("Заказ успешно оформлен!");
+            toggleCart();
+            window.location.href = "/orders";
+        } catch (error) {
+            console.error("Ошибка при создании заказа:", error);
+            alert("Не удалось оформить заказ: " + error.message);
+        }
+    };
 
     return (
         <ModalOverlay onClick={toggleCart}>
@@ -87,8 +156,39 @@ const CartModal = () => {
                                     <span>Итого:</span>
                                     <span style={{ fontWeight: '600', fontSize: '1.2rem' }}>{totalSum} ₽</span>
                                 </SummaryRow>
+
+                                <FormWrapper>
+                                    <FormGroup>
+                                        <FormLabel>Адрес:</FormLabel>
+                                        <FormInput
+                                            type="text"
+                                            value={address}
+                                            onChange={(e) => setAddress(e.target.value)}
+                                            placeholder="Введите адрес"
+                                        />
+                                    </FormGroup>
+
+                                    <FormGroup>
+                                        <FormLabel>Дата начала аренды:</FormLabel>
+                                        <FormInput
+                                            type="datetime-local"
+                                            value={fromDate}
+                                            onChange={(e) => setFromDate(e.target.value)}
+                                        />
+                                    </FormGroup>
+
+                                    <FormGroup>
+                                        <FormLabel>Дата окончания аренды:</FormLabel>
+                                        <FormInput
+                                            type="datetime-local"
+                                            value={toDate}
+                                            onChange={(e) => setToDate(e.target.value)}
+                                        />
+                                    </FormGroup>
+                                </FormWrapper>
+
                                 <CheckoutButton
-                                    onClick={() => console.log('Оформление заказа')}
+                                    onClick={createOrder}
                                     disabled={unavailableItems.length > 0}
                                 >
                                     Оформить заказ
