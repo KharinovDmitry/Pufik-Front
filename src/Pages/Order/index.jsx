@@ -13,7 +13,7 @@ import {
 } from "./styles";
 
 import BackButton from "../../components/ReturnButton";
-
+import { useToast } from "../../context/ToastContext";
 const Orders = () => {
     const [orders, setOrders] = useState([]);
     const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -21,6 +21,7 @@ const Orders = () => {
     const userPhone = userData.phone;
     const token = localStorage.getItem("auth_token");
     const apiUrl = "http://45.83.143.192/api/order";
+    const { showToast } = useToast();
 
     useEffect(() => {
         const token = localStorage.getItem('auth_token');
@@ -63,7 +64,7 @@ const Orders = () => {
             setOrders(sortOrdersByDate(data));
         } catch (error) {
             console.error(error);
-            alert("Ошибка при загрузке заказов. Пожалуйста, попробуйте позже.");
+            showToast("Ошибка при загрузке заказов. Пожалуйста, попробуйте позже.");
         }
     };
 
@@ -86,7 +87,7 @@ const Orders = () => {
             await fetchOrders(token);
         } catch (error) {
             console.error(error);
-            alert("Ошибка при обновлении заказа. Пожалуйста, попробуйте позже.");
+            showToast("Ошибка при обновлении заказа. Пожалуйста, попробуйте позже.");
         }
     };
 

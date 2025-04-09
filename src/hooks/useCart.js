@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { useCart } from '../context/CartContext';
 import { CartService } from '../services/cart';
 import { useAuth } from '../context/TgAuthContext';
-
+import { useToast } from "../context/ToastContext";
 
 export const useCartActions = () => {
     const {
@@ -20,7 +20,7 @@ export const useCartActions = () => {
     } = useCart();
 
     const { user } = useAuth(); // Получаем информацию об авторизации
-
+    const { showToast } = useToast();
     /**
      * Добавление товара в корзину
      * @param {string} inventoryId - ID инвентаря из API /api/inventory/available
@@ -28,7 +28,7 @@ export const useCartActions = () => {
     const addItem = async (inventoryId) => {
         if (!user) {
             // Если пользователь не авторизован, отобразить модальное окно
-            alert('Чтобы добавить товары в корзину, нужно авторизоваться');
+            showToast('Чтобы добавить товары в корзину, нужно авторизоваться');
             return;
         }
         try {

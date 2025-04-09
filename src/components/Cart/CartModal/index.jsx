@@ -14,7 +14,7 @@ import {
     ModalContent, FormWrapper, FormGroup, FormLabel, FormInput
 } from './styles';
 import {API_GATEWAY} from "../../../config";
-
+import { useToast } from "../../../context/ToastContext";
 const CartModal = () => {
     const {
         items,
@@ -32,6 +32,7 @@ const CartModal = () => {
     const [address, setAddress] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    const { showToast } = useToast();
 
     useEffect(() => {
         if (isCartOpen) {
@@ -56,7 +57,7 @@ const CartModal = () => {
     const createOrder = async () => {
         // Проверка на заполненность полей
         if (!address || !fromDate || !toDate) {
-            alert("Пожалуйста, заполните все поля: адрес и даты начала/окончания аренды.");
+            showToast("Пожалуйста, заполните все поля");
             return;
         }
 
@@ -65,12 +66,12 @@ const CartModal = () => {
 
         // Проверка корректности дат
         if (!isValidDate(fromDateObj) || !isValidDate(toDateObj)) {
-            alert("Пожалуйста, введите корректные даты начала и окончания аренды.");
+            showToast("Пожалуйста, введите корректные даты начала и окончания аренды.");
             return;
         }
         const token = localStorage.getItem("auth_token");
         if (!token) {
-            alert("Необходимо войти в аккаунт");
+            showToast("Необходимо войти в аккаунт");
             return;
         }
 
@@ -100,12 +101,12 @@ const CartModal = () => {
                 throw new Error(errorText);
             }
 
-            alert("Заказ успешно оформлен!");
+            showToast("Заказ успешно оформлен!");
             toggleCart();
             window.location.href = "/orders";
         } catch (error) {
             console.error("Ошибка при создании заказа:", error);
-            alert("Не удалось оформить заказ: " + error.message);
+            showToast("Не удалось оформить заказ, введите корректные даты начала и окончания аренды");
         }
     };
 
