@@ -59,7 +59,10 @@ const cartReducer = (state, action) => {
                 ...state,
                 items: state.items.map(item =>
                     item.uuid === action.payload.itemUuid
-                        ? { ...item, count: action.payload.newQuantity }
+                        ? {
+                            ...item,
+                            count: Math.max(1, action.payload.newQuantity)
+                        }
                         : item
                 ),
                 loading: false

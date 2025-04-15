@@ -22,14 +22,14 @@ const CartItem = ({
             $highlighted={highlighted}
         >
             <ItemInfo>
-                <ItemName>{item.inventory.name}</ItemName>
-                <ItemPrice>{item.inventory.cost_per_day} ₽/день</ItemPrice>
+                <ItemName>{item.inventory?.name || 'Товар не найден'}</ItemName>
+                <ItemPrice>{item.inventory?.cost_per_day || 0} ₽/день</ItemPrice>
             </ItemInfo>
 
             <ItemActions>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <QuantityButton
-                        onClick={() => onQuantityChange(Math.max(1, item.count - 1))}
+                        onClick={() => onQuantityChange(item.uuid, Math.max(1, item.count - 1))}
                         aria-label="Уменьшить количество"
                     >
                         −
@@ -44,7 +44,7 @@ const CartItem = ({
                         {item.count}
                     </span>
                     <QuantityButton
-                        onClick={() => onQuantityChange(Math.min(maxQuantity, item.count + 1))}
+                        onClick={() => onQuantityChange(item.uuid, item.count + 1)}
                         aria-label="Увеличить количество"
                         disabled={item.count >= maxQuantity}
                     >

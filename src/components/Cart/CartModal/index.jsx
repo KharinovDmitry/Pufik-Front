@@ -20,7 +20,7 @@ const CartModal = () => {
         items,
         isCartOpen,
         highlightItems,
-        actions: { toggleCart, removeItem, updateQuantity }
+        actions: { toggleCart, removeItem, updateQuantity, setCart }
     } = useCart();
 
 
@@ -34,14 +34,31 @@ const CartModal = () => {
     const [toDate, setToDate] = useState("");
     const { showToast } = useToast();
 
+    // В useEffect для загрузки данных:
     useEffect(() => {
-        if (isCartOpen) {
-            const unavailable = items.filter(
-                item => item.inventory.balance < item.count
-            );
-            setUnavailableItems(unavailable);
+        if (isCartOpen && items.length > 0) {
+            const loadInventoryData = async () => {
+                try {
+                    const response = await fetch(`${API_GATEWAY}/api/inventory/available`);
+                    const inventoryData = await response.json();
+                    const inventoryMap = inventoryData.reduce((acc, item) => {
+                        acc[item.id] = item;
+                        return acc;
+                    }, {});
+                    
+                    const enrichedItems = items.map(item => ({
+                        ...item,
+                        inventory: inventoryMap[item.inventory?.id] || {}
+                    }));
+                    
+                    setCart(enrichedItems); // Обновляем данные в контексте
+                } catch (error) {
+                    console.error('Ошибка загрузки данных инвентаря:', error);
+                }
+            };
+            loadInventoryData();
         }
-    }, [isCartOpen, items]);
+    }, [isCartOpen]); // Убрана зависимость от items
 
     const totalSum = items.reduce(
         (sum, item) => sum + (item.count * item.inventory.cost_per_day),
@@ -135,7 +152,7 @@ const CartModal = () => {
 
                                 {items.map(item => (
                                     <CartItem
-                                        key={item.uuid}
+                                        key={item.inventory?.id || item.uuid}// Используйте уникальный ID инвентаря
                                         item={item}
                                         highlighted={highlightItems[item.uuid]}
                                         onRemove={() => removeItem(item.uuid)}

@@ -10,67 +10,135 @@ const handleResponse = async (response) => {
 
 export const CartService = {
     async getCart() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            return JSON.parse(localStorage.getItem('local_cart')) || [];
+        }
+    
         try {
-            const token = localStorage.getItem('auth_token');
-            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-
-            const response = await fetch(`${API_GATEWAY}/api/order/cart/my`, { headers });
-            return await handleResponse(response);
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/my`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                throw new Error('Ошибка получения корзины');
+            }
+            return await response.json();
         } catch (error) {
-            console.error('Cart fetch error:', error);
+            console.error('Ошибка получения корзины:', error);
             throw error;
         }
     },
 
     async addItem(inventoryId, count = 1) {
         const token = localStorage.getItem('auth_token');
-        const url = token ?
-            `${API_GATEWAY}/api/order/cart/add` :
-            null;
-
-        if (url) {
-            // Запрос к бэкенду
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({inventory_uuid: inventoryId, count})
-            });
-            return this.getCart();
-        } else {
-            // Логика для локального хранилища
-            return new Promise((resolve) => {
+        if (!token) {
+            try {
+                // Получаем информацию о товаре из API
+                const response = await fetch(`${API_GATEWAY}/api/inventory/available`);
+                const inventoryData = await response.json();
+                const item = inventoryData.find(i => i.id === inventoryId);
+    
+                if (!item) throw new Error('Товар не найден');
+    
                 const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
-                const existingItem = localCart.find(i => i.inventory_id === inventoryId);
-
-                const updatedCart = existingItem ?
-                    localCart.map(i =>
-                        i.inventory_id === inventoryId ?
-                            {...i, count: i.count + count} : i
-                    ) :
-                    [...localCart, {inventory_id: inventoryId, count}];
-
+                const existingItem = localCart.find(i => i.inventory?.id === inventoryId);
+    
+                const updatedCart = existingItem
+                    ? localCart.map(i => 
+                        i.inventory.id === inventoryId 
+                            ? { 
+                                ...i, 
+                                count: i.count + count,
+                                inventory: {
+                                    ...i.inventory,
+                                    balance: Math.max(0, i.inventory.balance - count)
+                                }
+                            }
+                            : i
+                    )
+                    : [
+                        ...localCart,
+                        {
+                            uuid: crypto.randomUUID(),
+                            inventory: {
+                                id: item.id,
+                                name: item.name,
+                                cost_per_day: item.cost_per_day,
+                                balance: item.balance - count
+                            },
+                            count: count
+                        }
+                    ];
+    
                 localStorage.setItem('local_cart', JSON.stringify(updatedCart));
-                resolve(updatedCart);
-            });
+                return updatedCart;
+            } catch (error) {
+                console.error('Ошибка добавления товара:', error);
+                throw error;
+            }
+        } else {
+            // Для авторизованных пользователей
+            try {
+                const response = await fetch(`${API_GATEWAY}/api/order/cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        inventory_uuid: inventoryId,
+                        count: count
+                    })
+                });
+    
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Ошибка добавления товара');
+                }
+    
+                // Обогащаем данные корзины после добавления
+                const cartData = await this.getCart();
+                const inventoryResponse = await fetch(`${API_GATEWAY}/api/inventory/available`);
+                const inventoryData = await inventoryResponse.json();
+                const inventoryMap = inventoryData.reduce((acc, item) => {
+                    acc[item.id] = item;
+                    return acc;
+                }, {});
+    
+                const enrichedCart = cartData.map(cartItem => ({
+                    ...cartItem,
+                    inventory: inventoryMap[cartItem.inventory.uuid]
+                }));
+    
+                return enrichedCart;
+            } catch (error) {
+                console.error('Ошибка добавления товара:', error);
+                throw error;
+            }
         }
     },
 
     async removeItem(cartItemId) {
         try {
             const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${API_GATEWAY}/api/order/cart/remove`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ cart_item_id: cartItemId })
-            });
-
-            return this.getCart();
+            if (token) {
+                // Для авторизованных пользователей
+                const response = await fetch(`${API_GATEWAY}/api/order/cart/remove`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ cart_item_id: cartItemId })
+                });
+                return this.getCart();
+            } else {
+                // Для неавторизованных пользователей
+                const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
+                const updatedCart = localCart.filter(item => item.uuid !== cartItemId);
+                localStorage.setItem('local_cart', JSON.stringify(updatedCart));
+                return updatedCart;
+            }
         } catch (error) {
             console.error('Remove from cart error:', error);
             throw error;
@@ -80,18 +148,25 @@ export const CartService = {
     async syncCart(localCart) {
         const token = localStorage.getItem('auth_token');
         if (!token) return localCart;
-
+        
         try {
-            // Отправляем все элементы локальной корзины
-            await Promise.all(
-                localCart.map(item =>
-                    this.addItem(item.inventory_id, item.count)
-                )
-            );
-            return this.getCart();
+          // Сначала очищаем серверную корзину
+          await fetch(`${API_GATEWAY}/api/order/cart/clear`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+      
+          // Добавляем все элементы из локальной корзины
+          await Promise.all(
+            localCart.map(item => 
+              this.addItem(item.inventory_id, item.count)
+            )
+          );
+          
+          return this.getCart();
         } catch (error) {
-            console.error('Sync error:', error);
-            return this.getCart();
+          console.error('Sync error:', error);
+          return this.getCart();
         }
     },
 };
