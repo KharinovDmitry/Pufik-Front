@@ -11,70 +11,70 @@ const handleResponse = async (response) => {
 export const CartService = {
     async getCart() {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            return JSON.parse(localStorage.getItem('local_cart')) || [];
-        }
-    
-        try {
-            const response = await fetch(`${API_GATEWAY}/api/order/cart/my`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!response.ok) {
-                throw new Error('Ошибка получения корзины');
+        if (token) {
+            try {
+                const response = await fetch(`${API_GATEWAY}/api/order/cart/my`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Ошибка получения корзины');
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка получения корзины:', error);
+                throw error;
             }
-            return await response.json();
-        } catch (error) {
-            console.error('Ошибка получения корзины:', error);
-            throw error;
+        } else {
+            // Для неавторизованных пользователей возвращаем данные из localStorage
+            return JSON.parse(localStorage.getItem('local_cart')) || [];
         }
     },
 
     async addItem(inventoryId, count = 1) {
         const token = localStorage.getItem('auth_token');
-        if (!token) {
-            try {
-                // Получаем информацию о товаре из /api/order/cart/my
-                const cartData = await this.getCart();
-                const item = cartData.find(i => i.inventory?.id === inventoryId);
-    
-                if (!item) throw new Error('Товар не найден');
-    
-                const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
-                const existingItem = localCart.find(i => i.inventory?.id === inventoryId);
-    
-                const updatedCart = existingItem
-                    ? localCart.map(i => 
-                        i.inventory.id === inventoryId 
-                            ? { 
-                                ...i, 
-                                count: i.count + count,
-                                inventory: {
-                                    ...i.inventory,
-                                    balance: Math.max(0, i.inventory.balance - count)
-                                }
-                            }
-                            : i
-                    )
-                    : [
-                        ...localCart,
-                        {
-                            uuid: crypto.randomUUID(),
+    if (!token) {
+        try {
+            // Для неавторизованных пользователей загружаем данные из /api/inventory/available
+            const response = await fetch(`${API_GATEWAY}/api/inventory/available`);
+            const inventoryData = await response.json();
+            const item = inventoryData.find(i => i.id === inventoryId);
+
+            if (!item) throw new Error('Товар не найден');
+
+            const localCart = JSON.parse(localStorage.getItem('local_cart')) || [];
+            const existingItem = localCart.find(i => i.inventory?.id === inventoryId);
+
+            const updatedCart = existingItem
+                ? localCart.map(i => 
+                    i.inventory.id === inventoryId 
+                        ? { 
+                            ...i, 
+                            count: i.count + count,
                             inventory: {
-                                id: item.inventory.id,
-                                name: item.inventory.name,
-                                cost_per_day: item.inventory.cost_per_day,
-                                balance: item.inventory.balance - count
-                            },
-                            count: count
+                                ...i.inventory,
+                                balance: Math.max(0, i.inventory.balance - count)
+                            }
                         }
-                    ];
-    
-                localStorage.setItem('local_cart', JSON.stringify(updatedCart));
-                return updatedCart;
-            } catch (error) {
-                console.error('Ошибка добавления товара:', error);
-                throw error;
-            }
+                        : i
+                )
+                : [
+                    ...localCart,
+                    {
+                        uuid: crypto.randomUUID(),
+                        inventory: {
+                            id: item.id,
+                            name: item.name,
+                            cost_per_day: item.cost_per_day,
+                            balance: item.balance - count
+                        },
+                        count: count
+                    }
+                ];
+
+            localStorage.setItem('local_cart', JSON.stringify(updatedCart));
+            return updatedCart;
+        } catch (error) {
+            console.error('Ошибка добавления товара:', error);
+            throw error;
+        }
         } else {
             try {
                 const response = await fetch(`${API_GATEWAY}/api/order/cart/add`, {
