@@ -12,8 +12,18 @@ import {
     ActionButton,
 } from "./styles";
 
+import { API_GATEWAY, API_ENDPOINTS } from '../../config';
 import BackButton from "../../components/ReturnButton";
 import { useToast } from "../../context/ToastContext";
+
+const daysUntilStartDate = (fromDate) => {
+    const startDate = new Date(fromDate);
+    const today = new Date();
+    const timeDifference = startDate.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(timeDifference / (1000 * 3600 * 24));
+    return daysRemaining;
+};
+
 const Orders = () => {
     const [orders, setOrders] = useState([]);
     const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
@@ -68,10 +78,9 @@ const Orders = () => {
         }
     };
 
-    const handleOrderAction = async (id, action) => {
-        const method = action === "cancel" ? "DELETE" : "POST";
-        const basePath = action === "cancel" ? `${apiUrl}s` : apiUrl; // orders для cancel
-        const endpoint = `${basePath}/${id}/${action}`;
+    const handleOrderAction = async (id) => {
+        const method = "DELETE";
+        const endpoint = `${API_GATEWAY}/api/orders/${id}/cancel`; // Исправленный путь
 
         try {
             const response = await fetch(endpoint, {
@@ -82,11 +91,14 @@ const Orders = () => {
                 }
             });
 
-            if (!response.ok) throw new Error("Ошибка при обновлении заказа");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Ошибка при обновлении заказа");
+            }
 
             await fetchOrders(token);
         } catch (error) {
-            console.error(error);
+            console.error("Ошибка при обновлении заказа:", error);
             showToast("Ошибка при обновлении заказа. Пожалуйста, попробуйте позже.");
         }
     };
@@ -118,20 +130,28 @@ const Orders = () => {
                                 {role === "buyer" && <span>Номер: {userPhone}</span>}
                                 {role === "buyer" && (
                                     <ActionButtons>
-                                        {order.status === "created" && (
+                                        {order.status === "создан" && (
                                             <>
-                                                <ActionButton onClick={() => handleOrderAction(order.uuid, "confirm")}>
-                                                    Подтвердить
-                                                </ActionButton>
-                                                <ActionButton onClick={() => handleOrderAction(order.uuid, "cancel")}>
+                                                <ActionButton
+                                                    disabled={daysUntilStartDate(order.from_date) < 3}
+                                                    onClick={() => handleOrderAction(order.uuid)}
+                                                    title={
+                                                        daysUntilStartDate(order.from_date) < 3
+                                                            ? "Отмена возможна не менее чем за три дня до заказа"
+                                                            : undefined
+                                                    }
+                                                >
                                                     Отменить
                                                 </ActionButton>
                                             </>
                                         )}
                                         {order.status === "confirmed" && (
+                                            <><ActionButton onClick={() => handleOrderAction(order.uuid, "confirm")}>
+                                                Подтвердить
+                                            </ActionButton>
                                             <ActionButton onClick={() => handleOrderAction(order.uuid, "close")}>
                                                 Закрыть
-                                            </ActionButton>
+                                            </ActionButton></>
                                         )}
                                     </ActionButtons>
                                 )}
