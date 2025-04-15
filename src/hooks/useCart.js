@@ -80,18 +80,13 @@ export const useCartActions = () => {
             startLoading();
             const cartData = await CartService.getCart();
     
-            // Загружаем данные инвентаря
-            const inventoryResponse = await fetch(`${API_GATEWAY}/api/inventory/available`);
-            const inventoryData = await inventoryResponse.json();
-            const inventoryMap = inventoryData.reduce((acc, item) => {
-                acc[item.id] = item;
-                return acc;
-            }, {});
-    
-            // Обогащаем данные корзины
+            // Убедимся, что каждый элемент имеет поле inventory.cost_per_day
             const enrichedCart = cartData.map(cartItem => ({
                 ...cartItem,
-                inventory: inventoryMap[cartItem.inventory.uuid]
+                inventory: {
+                    ...cartItem.inventory,
+                    cost_per_day: cartItem.inventory?.cost_per_day || 0
+                }
             }));
     
             setCart(enrichedCart);

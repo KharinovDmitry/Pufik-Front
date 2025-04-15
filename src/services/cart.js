@@ -33,10 +33,9 @@ export const CartService = {
         const token = localStorage.getItem('auth_token');
         if (!token) {
             try {
-                // Получаем информацию о товаре из API
-                const response = await fetch(`${API_GATEWAY}/api/inventory/available`);
-                const inventoryData = await response.json();
-                const item = inventoryData.find(i => i.id === inventoryId);
+                // Получаем информацию о товаре из /api/order/cart/my
+                const cartData = await this.getCart();
+                const item = cartData.find(i => i.inventory?.id === inventoryId);
     
                 if (!item) throw new Error('Товар не найден');
     
@@ -61,10 +60,10 @@ export const CartService = {
                         {
                             uuid: crypto.randomUUID(),
                             inventory: {
-                                id: item.id,
-                                name: item.name,
-                                cost_per_day: item.cost_per_day,
-                                balance: item.balance - count
+                                id: item.inventory.id,
+                                name: item.inventory.name,
+                                cost_per_day: item.inventory.cost_per_day,
+                                balance: item.inventory.balance - count
                             },
                             count: count
                         }
@@ -77,7 +76,6 @@ export const CartService = {
                 throw error;
             }
         } else {
-            // Для авторизованных пользователей
             try {
                 const response = await fetch(`${API_GATEWAY}/api/order/cart/add`, {
                     method: 'POST',
@@ -96,21 +94,7 @@ export const CartService = {
                     throw new Error(errorData.error || 'Ошибка добавления товара');
                 }
     
-                // Обогащаем данные корзины после добавления
-                const cartData = await this.getCart();
-                const inventoryResponse = await fetch(`${API_GATEWAY}/api/inventory/available`);
-                const inventoryData = await inventoryResponse.json();
-                const inventoryMap = inventoryData.reduce((acc, item) => {
-                    acc[item.id] = item;
-                    return acc;
-                }, {});
-    
-                const enrichedCart = cartData.map(cartItem => ({
-                    ...cartItem,
-                    inventory: inventoryMap[cartItem.inventory.uuid]
-                }));
-    
-                return enrichedCart;
+                return this.getCart();
             } catch (error) {
                 console.error('Ошибка добавления товара:', error);
                 throw error;

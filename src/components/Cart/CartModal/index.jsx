@@ -37,28 +37,10 @@ const CartModal = () => {
     // В useEffect для загрузки данных:
     useEffect(() => {
         if (isCartOpen && items.length > 0) {
-            const loadInventoryData = async () => {
-                try {
-                    const response = await fetch(`${API_GATEWAY}/api/inventory/available`);
-                    const inventoryData = await response.json();
-                    const inventoryMap = inventoryData.reduce((acc, item) => {
-                        acc[item.id] = item;
-                        return acc;
-                    }, {});
-                    
-                    const enrichedItems = items.map(item => ({
-                        ...item,
-                        inventory: inventoryMap[item.inventory?.id] || {}
-                    }));
-                    
-                    setCart(enrichedItems); // Обновляем данные в контексте
-                } catch (error) {
-                    console.error('Ошибка загрузки данных инвентаря:', error);
-                }
-            };
-            loadInventoryData();
+            // Убираем вызов /api/inventory/available
+            // Теперь данные корзины остаются без изменений
         }
-    }, [isCartOpen]); // Убрана зависимость от items
+    }, [isCartOpen]);
 
     const totalSum = items.reduce(
         (sum, item) => sum + (item.count * item.inventory.cost_per_day),
