@@ -107,6 +107,18 @@ const Orders = () => {
         return orders.sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
     };
 
+    const groupItemsByUUID = (items) => {
+        const grouped = {};
+        items.forEach(item => {
+            if (!grouped[item.uuid]) {
+                grouped[item.uuid] = { ...item, count: 1 };
+            } else {
+                grouped[item.uuid].count += 1;
+            }
+        });
+        return Object.values(grouped);
+    };
+
     return (
         <StyledPageContainer>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
@@ -157,10 +169,11 @@ const Orders = () => {
                                 )}
                             </OrderInfo>
                             <InventoryList>
-                                {order.inventories.map((item) => (
+                                {groupItemsByUUID(order.inventories).map((item) => (
                                     <InventoryItem key={item.uuid}>
-                                        <span>{item.name}</span>
+                                        <span className="name">{item.name}</span>
                                         <span>Стоимость в день: {item.cost_per_day} р.</span>
+                                        <span>Количество: {item.count}</span>
                                     </InventoryItem>
                                 ))}
                             </InventoryList>

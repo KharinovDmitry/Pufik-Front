@@ -2,10 +2,16 @@ import { API_GATEWAY } from "../config";
 
 const handleResponse = async (response) => {
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Request failed');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Произошла ошибка');
     }
-    return response.json();
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+    }
+
+    return null;
 };
 
 export const CartService = {
@@ -153,4 +159,69 @@ export const CartService = {
           return this.getCart();
         }
     },
+
+    async incrementItem(cartItem) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) throw new Error('Необходимо авторизоваться');
+
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/add`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ inventory_uuid: cartItem.inventory.uuid }) // важно, что не cartItem.uuid
+            });
+
+            await handleResponse(response);
+            return this.getCart();
+        } catch (error) {
+            console.error('Ошибка при увеличении:', error);
+            throw error;
+        }
+    },
+
+    async decrementItem(cartItem) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) throw new Error('Необходимо авторизоваться');
+
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/${cartItem.uuid}/remove-item`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            await handleResponse(response);
+            return this.getCart();
+        } catch (error) {
+            console.error('Ошибка при уменьшении:', error);
+            throw error;
+        }
+    },
+
+
+    //Починить, чтобы было именно удаление позиции, а не единицы товара
+    async removePosition(cartItem) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) throw new Error('Необходимо авторизоваться');
+
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/${cartItem.uuid}/remove-position`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            await handleResponse(response);
+            return this.getCart();
+        } catch (error) {
+            console.error('Ошибка при уменьшении:', error);
+            throw error;
+        }
+    }
+
 };

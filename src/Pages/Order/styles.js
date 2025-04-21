@@ -103,6 +103,17 @@ export const InventoryItem = styled.li`
     background-color: #ffffff;
     font-size: 15px;
     color: #2c3e50;
+    
+    span {
+        min-width: 150px;
+        text-align: right;
+    }
+    
+    span.name {
+        flex-grow: 1;
+        text-align: left;
+        padding-right: 10px;
+    }
 `;
 
 export const ActionButtons = styled.div`

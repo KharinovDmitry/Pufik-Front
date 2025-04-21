@@ -50,7 +50,7 @@ const cartReducer = (state, action) => {
         case ActionTypes.REMOVE_ITEM:
             return {
                 ...state,
-                items: state.items.filter(item => item.uuid !== action.payload),
+                items: state.items.filter(item => item.uuid !== action.payload.itemUuid),
                 loading: false
             };
 

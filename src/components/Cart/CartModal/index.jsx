@@ -54,7 +54,6 @@ const CartModal = () => {
     };
 
     const createOrder = async () => {
-        // Проверка на заполненность полей
         if (!address || !fromDate || !toDate) {
             showToast("Пожалуйста, заполните все поля");
             return;
@@ -63,7 +62,6 @@ const CartModal = () => {
         const fromDateObj = new Date(fromDate);
         const toDateObj = new Date(toDate);
 
-        // Проверка корректности дат
         if (!isValidDate(fromDateObj) || !isValidDate(toDateObj)) {
             showToast("Пожалуйста, введите корректные даты начала и окончания аренды.");
             return;
@@ -78,7 +76,9 @@ const CartModal = () => {
         console.log("toDate:", toDate);
 
         try {
-            const inventories = items.map(item => item.inventory.uuid);
+            const inventories = items.flatMap(item =>
+                Array(item.count).fill(item.inventory.uuid)
+            );
 
             const body = { address,
                 fromDate: formatDate(new Date(fromDate)),
@@ -108,6 +108,32 @@ const CartModal = () => {
             showToast("Не удалось оформить заказ, введите корректные даты начала и окончания аренды");
         }
     };
+    const removeItemFromCart = async (itemUuid) => {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            showToast("Необходимо войти в аккаунт");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/${itemUuid}/remove-position`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            removeItem(itemUuid);
+        } catch (error) {
+            console.error("Ошибка при удалении из корзины:", error);
+            showToast("Не удалось удалить товар из корзины");
+        }
+    };
 
     return (
         <ModalOverlay onClick={toggleCart}>
@@ -134,14 +160,12 @@ const CartModal = () => {
 
                                 {items.map(item => (
                                     <CartItem
-                                        key={item.inventory?.id || item.uuid}// Используйте уникальный ID инвентаря
+                                        key={item.uuid}
                                         item={item}
                                         highlighted={highlightItems[item.uuid]}
-                                        onRemove={() => removeItem(item.uuid)}
-                                        onQuantityChange={(newCount) =>
-                                            updateQuantity(item.uuid, Math.min(newCount, item.inventory.balance))
-                                        }
+                                        onRemove={() => removeItemFromCart(item.uuid)}
                                         maxQuantity={item.inventory.balance}
+                                        onCartUpdate={setCart}
                                         isAvailable={item.inventory.balance >= item.count}
                                     />
                                 ))}
