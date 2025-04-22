@@ -146,7 +146,7 @@ const CartModal = () => {
 
                     {items.length === 0 ? (
                         <EmptyMessage>
-                            <img src="/empty-cart.svg" alt="Пустая корзина" width={120} />
+                            <img src="/empty-cart.png" alt="Пустая корзина" width={120} />
                             <p>Корзина пуста</p>
                         </EmptyMessage>
                     ) : (
