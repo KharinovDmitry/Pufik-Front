@@ -68,7 +68,7 @@ export const CartService = {
                         inventory: {
                             id: item.id,
                             name: item.name,
-                            cost_per_day: item.cost_per_day,
+                            cost_per_day: item.costPerDay,
                             balance: item.balance - count
                         },
                         count: count
