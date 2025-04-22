@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { AuthService } from '../services/auth';
 import {TG_BOT_NAME} from "../config";
+import { CartService } from '../services/cart'; 
 
 const AuthContext = createContext();
 
@@ -34,11 +35,13 @@ export const AuthProvider = ({ children }) => {
             const telegramUrl = `https://t.me/${TG_BOT_NAME}?start=${challenge}`;
             window.open(telegramUrl, '_blank');
 
-            // 3. Начинаем опрашивать сервер на наличие токена
+            // 3. Начинаем опрашивать сервер на наличие токена  
             const authData = await AuthService.pollForToken(challenge);
 
             // 4. Если токен получен - логиним пользователя
             login(authData);
+
+            await CartService.syncCart(JSON.parse(localStorage.getItem('local_cart')) || []);            
 
         } catch (err) {
             setError(err.message || 'Ошибка авторизации');

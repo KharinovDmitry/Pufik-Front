@@ -14,13 +14,13 @@ import {
     ModalContent, FormWrapper, FormGroup, FormLabel, FormInput
 } from './styles';
 import {API_GATEWAY} from "../../../config";
-
+import { useToast } from "../../../context/ToastContext";
 const CartModal = () => {
     const {
         items,
         isCartOpen,
         highlightItems,
-        actions: { toggleCart, removeItem, updateQuantity }
+        actions: { toggleCart, removeItem, updateQuantity, setCart }
     } = useCart();
 
 
@@ -32,15 +32,15 @@ const CartModal = () => {
     const [address, setAddress] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    const { showToast } = useToast();
 
+    // В useEffect для загрузки данных:
     useEffect(() => {
-        if (isCartOpen) {
-            const unavailable = items.filter(
-                item => item.inventory.balance < item.count
-            );
-            setUnavailableItems(unavailable);
+        if (isCartOpen && items.length > 0) {
+            // Убираем вызов /api/inventory/available
+            // Теперь данные корзины остаются без изменений
         }
-    }, [isCartOpen, items]);
+    }, [isCartOpen]);
 
     const totalSum = items.reduce(
         (sum, item) => sum + (item.count * item.inventory.cost_per_day),
@@ -54,23 +54,21 @@ const CartModal = () => {
     };
 
     const createOrder = async () => {
-        // Проверка на заполненность полей
         if (!address || !fromDate || !toDate) {
-            alert("Пожалуйста, заполните все поля: адрес и даты начала/окончания аренды.");
+            showToast("Пожалуйста, заполните все поля");
             return;
         }
 
         const fromDateObj = new Date(fromDate);
         const toDateObj = new Date(toDate);
 
-        // Проверка корректности дат
         if (!isValidDate(fromDateObj) || !isValidDate(toDateObj)) {
-            alert("Пожалуйста, введите корректные даты начала и окончания аренды.");
+            showToast("Пожалуйста, введите корректные даты начала и окончания аренды.");
             return;
         }
         const token = localStorage.getItem("auth_token");
         if (!token) {
-            alert("Необходимо войти в аккаунт");
+            showToast("Необходимо войти в аккаунт");
             return;
         }
 
@@ -78,7 +76,9 @@ const CartModal = () => {
         console.log("toDate:", toDate);
 
         try {
-            const inventories = items.map(item => item.inventory.uuid);
+            const inventories = items.flatMap(item =>
+                Array(item.count).fill(item.inventory.uuid)
+            );
 
             const body = { address,
                 fromDate: formatDate(new Date(fromDate)),
@@ -100,12 +100,38 @@ const CartModal = () => {
                 throw new Error(errorText);
             }
 
-            alert("Заказ успешно оформлен!");
+            showToast("Заказ успешно оформлен!");
             toggleCart();
             window.location.href = "/orders";
         } catch (error) {
             console.error("Ошибка при создании заказа:", error);
-            alert("Не удалось оформить заказ: " + error.message);
+            showToast("Не удалось оформить заказ, введите корректные даты начала и окончания аренды");
+        }
+    };
+    const removeItemFromCart = async (itemUuid) => {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            showToast("Необходимо войти в аккаунт");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/cart/${itemUuid}/remove-position`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+
+            removeItem(itemUuid);
+        } catch (error) {
+            console.error("Ошибка при удалении из корзины:", error);
+            showToast("Не удалось удалить товар из корзины");
         }
     };
 
@@ -137,11 +163,9 @@ const CartModal = () => {
                                         key={item.uuid}
                                         item={item}
                                         highlighted={highlightItems[item.uuid]}
-                                        onRemove={() => removeItem(item.uuid)}
-                                        onQuantityChange={(newCount) =>
-                                            updateQuantity(item.uuid, Math.min(newCount, item.inventory.balance))
-                                        }
+                                        onRemove={() => removeItemFromCart(item.uuid)}
                                         maxQuantity={item.inventory.balance}
+                                        onCartUpdate={setCart}
                                         isAvailable={item.inventory.balance >= item.count}
                                     />
                                 ))}

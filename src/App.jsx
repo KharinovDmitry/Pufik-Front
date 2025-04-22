@@ -4,17 +4,20 @@ import { AuthProvider } from './context/TgAuthContext';
 import Home from './Pages/Home';
 import AuthPage from './Pages/Auth';
 import Orders from './Pages/Order';
+import { ToastProvider } from './context/ToastContext';
 
 function App() {
     return (
         <Router>
             <AuthProvider>
                 <CartProvider>
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/auth" element={<AuthPage />} />
-                        <Route path="/orders" element={<Orders />} />
-                    </Routes>
+                    <ToastProvider>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/auth" element={<AuthPage />} />
+                            <Route path="/orders" element={<Orders />} />
+                        </Routes>
+                    </ToastProvider>
                 </CartProvider>
             </AuthProvider>
         </Router>

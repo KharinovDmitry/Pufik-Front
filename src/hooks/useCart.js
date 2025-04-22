@@ -1,51 +1,52 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { CartService } from '../services/cart';
 import { useAuth } from '../context/TgAuthContext';
-
+import { useToast } from "../context/ToastContext";
+import { API_GATEWAY } from '../config';
 
 export const useCartActions = () => {
     const {
         items,
         isCartOpen,
-        highlightItem,
         actions: {
             setCart,
             addItem: contextAddItem,
             removeItem: contextRemoveItem,
             toggleCart,
             startLoading,
+            highlightItem,
             setError
         }
     } = useCart();
 
     const { user } = useAuth(); // Получаем информацию об авторизации
-
+    const { showToast } = useToast();
     /**
      * Добавление товара в корзину
      * @param {string} inventoryId - ID инвентаря из API /api/inventory/available
      */
-    const addItem = async (inventoryId) => {
-        if (!user) {
-            // Если пользователь не авторизован, отобразить модальное окно
-            alert('Чтобы добавить товары в корзину, нужно авторизоваться');
-            return;
+
+    useEffect(() => {
+        if (user) {
+            syncCart();
         }
+    }, [user]);
+
+    const addItem = async (inventoryId) => {
         try {
             startLoading();
-
             const updatedCart = await CartService.addItem(inventoryId);
             setCart(updatedCart);
-
-            // Безопасное получение добавленного элемента
+    
             const addedItem = updatedCart.find(item =>
                 item.inventory && item.inventory.id === inventoryId
             );
-
+    
             if (addedItem) {
                 highlightItem(addedItem.uuid);
             }
-
+    
             if (!isCartOpen && items.length === 0) {
                 toggleCart();
             }
@@ -78,7 +79,17 @@ export const useCartActions = () => {
         try {
             startLoading();
             const cartData = await CartService.getCart();
-            setCart(cartData || []);
+    
+            // Убедимся, что каждый элемент имеет поле inventory.cost_per_day
+            const enrichedCart = cartData.map(cartItem => ({
+                ...cartItem,
+                inventory: {
+                    ...cartItem.inventory,
+                    cost_per_day: cartItem.inventory?.cost_per_day || 0
+                }
+            }));
+    
+            setCart(enrichedCart);
         } catch (error) {
             console.error('Ошибка синхронизации корзины:', error);
             setError('Не удалось загрузить корзину');
@@ -97,7 +108,7 @@ export const useCartActions = () => {
      */
     const getTotalSum = () => {
         return items.reduce((sum, item) => {
-            return sum + (item.count * item.inventory.cost_per_day);
+            return sum + (item.inventory?.cost_per_day || 0) * item.count;
         }, 0);
     };
 

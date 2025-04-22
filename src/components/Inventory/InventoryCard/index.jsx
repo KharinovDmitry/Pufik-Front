@@ -18,7 +18,7 @@ const InventoryCard = ({ item, onAddToCart }) => {
                 <CardStatus $status={item.status}>
                     {item.status}
                 </CardStatus>
-                <CardPrice>{item.cost_per_day} ₽/день</CardPrice>
+                <CardPrice>{item.costPerDay} ₽/день</CardPrice>
                 <div style={{ margin: '10px 0' }}>
                     Доступно: {item.balance} шт.
                 </div>

@@ -5,7 +5,10 @@ import { CartIcon, Counter, TotalPrice } from './styles';
 const CartButton = () => {
     const { items, actions: { toggleCart } } = useCart();
     const totalItems = items.reduce((sum, item) => sum + item.count, 0);
-    const totalSum = items.reduce((sum, item) => sum + (item.count * item.inventory.cost_per_day), 0);
+    const totalSum = items.reduce(
+        (sum, item) => sum + (item.inventory?.cost_per_day || 0) * item.count,
+        0
+    );
 
     return (
         <button

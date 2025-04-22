@@ -1,4 +1,5 @@
 import React from 'react';
+import { CartService } from '../../../services/cart';
 import {
     ItemContainer,
     ItemInfo,
@@ -9,15 +10,48 @@ import {
     RemoveButton,
     AvailabilityInfo
 } from './styles';
+import {API_GATEWAY} from "../../../config";
+import { useToast } from "../../../context/ToastContext";
+
 
 const CartItem = ({
                       item,
                       highlighted,
                       onRemove,
-                      onQuantityChange,
                       maxQuantity,
+                      onCartUpdate
                   }) => {
+    const { showToast } = useToast();
+    const handleIncrease = async () => {
+        try {
+            const updatedCart = await CartService.incrementItem(item);
+            onCartUpdate(updatedCart);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleDecrease = async () => {
+        try {
+            const updatedCart = await CartService.decrementItem(item);
+            onCartUpdate(updatedCart);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleRemove = async () => {
+        try {
+            const updatedCart = await CartService.removePosition(item);
+            onCartUpdate(updatedCart); // Обновляем состояние корзины
+        } catch (error) {
+            console.error("Ошибка при удалении товара:", error);
+            showToast("Не удалось удалить товар из корзины");
+        }
+    };
+
     return (
+
         <ItemContainer
             $highlighted={highlighted}
         >
@@ -29,7 +63,7 @@ const CartItem = ({
             <ItemActions>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <QuantityButton
-                        onClick={() => onQuantityChange(Math.max(1, item.count - 1))}
+                        onClick={handleDecrease}
                         aria-label="Уменьшить количество"
                     >
                         −
@@ -44,7 +78,7 @@ const CartItem = ({
                         {item.count}
                     </span>
                     <QuantityButton
-                        onClick={() => onQuantityChange(Math.min(maxQuantity, item.count + 1))}
+                        onClick={handleIncrease}
                         aria-label="Увеличить количество"
                         disabled={item.count >= maxQuantity}
                     >
@@ -52,7 +86,7 @@ const CartItem = ({
                     </QuantityButton>
                 </div>
                 <RemoveButton
-                    onClick={onRemove}
+                    onClick={handleRemove}
                     aria-label="Удалить из корзины"
                 >
                     Удалить

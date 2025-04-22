@@ -50,7 +50,7 @@ const cartReducer = (state, action) => {
         case ActionTypes.REMOVE_ITEM:
             return {
                 ...state,
-                items: state.items.filter(item => item.uuid !== action.payload),
+                items: state.items.filter(item => item.uuid !== action.payload.itemUuid),
                 loading: false
             };
 
@@ -59,7 +59,10 @@ const cartReducer = (state, action) => {
                 ...state,
                 items: state.items.map(item =>
                     item.uuid === action.payload.itemUuid
-                        ? { ...item, count: action.payload.newQuantity }
+                        ? {
+                            ...item,
+                            count: Math.max(1, action.payload.newQuantity)
+                        }
                         : item
                 ),
                 loading: false
