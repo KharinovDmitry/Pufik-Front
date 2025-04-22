@@ -41,8 +41,13 @@ const CartItem = ({
     };
 
     const handleRemove = async () => {
-
-        showToast("Пока не работает(")
+        try {
+            const updatedCart = await CartService.removePosition(item);
+            onCartUpdate(updatedCart); // Обновляем состояние корзины
+        } catch (error) {
+            console.error("Ошибка при удалении товара:", error);
+            showToast("Не удалось удалить товар из корзины");
+        }
     };
 
     return (
