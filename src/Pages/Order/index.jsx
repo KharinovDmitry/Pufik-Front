@@ -79,8 +79,8 @@ const Orders = () => {
     };
 
     const handleOrderAction = async (id) => {
-        const method = "DELETE";
-        const endpoint = `${API_GATEWAY}/api/orders/${id}/cancel`; // Исправленный путь
+        const method = "POST";
+        const endpoint = `${API_GATEWAY}/api/order/${id}/cancel`; // Исправленный путь
 
         try {
             const response = await fetch(endpoint, {

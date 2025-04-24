@@ -146,8 +146,8 @@ const CartModal = () => {
 
                     {items.length === 0 ? (
                         <EmptyMessage>
-                            <img src="/empty-cart.svg" alt="Пустая корзина" width={120} />
-                            <p>Корзина пуста</p>
+                            <div style={{ fontSize: '48px' }}>🛒</div>
+                            <div style={{ fontSize: '18px', marginTop: '8px' }}>Ваша корзина пуста</div>
                         </EmptyMessage>
                     ) : (
                         <>
