@@ -19,7 +19,7 @@ import TgAuthButton from "../../components/TgAuthButton";
 import CartButton from "../../components/Cart/CartButton";
 import CartModal from "../../components/Cart/CartModal";
 import MyOrders from "../../components/OrdersButton";
-
+import AdminButton from "../../components/AdminButton";
 
 const Home = () => {
     const { inventory, loading, error, categories } = useInventory();
@@ -64,6 +64,7 @@ const Home = () => {
                 <PageTitle>Аренда инвентаря</PageTitle>
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                     <MyOrders />
+                    <AdminButton userRole={JSON.parse(localStorage.getItem("user_data"))?.role} />
                     <TgAuthButton />
                     <CartButton />
                 </div>
