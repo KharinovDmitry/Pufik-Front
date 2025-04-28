@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AdminContainer, UserList, UserItem, BackButton } from "./styles";
+import { AdminContainer, UserList, UserItem, BackButton, StyledPageTitle } from "./styles";
 import { API_GATEWAY } from '../../config';
+import BackButtonToMainPage from "../../components/ReturnButton"
+import { useToast } from "../../context/ToastContext";
 import {
     OrderList,
     OrderItem,
@@ -11,13 +13,14 @@ import {
     ActionButtons,
     ActionButton
 } from "../Order/styles";
+
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [orders, setOrders] = useState([]);
     const navigate = useNavigate();
-
     const token = localStorage.getItem('auth_token');
+    const { showToast } = useToast();
 
     useEffect(() => {
         fetch(`${API_GATEWAY}/api/order/users/all`, {
@@ -37,6 +40,28 @@ const AdminPanel = () => {
             .catch(error => console.error("Ошибка при загрузке пользователей:", error));
     }, [token]);
 
+    const fetchOrdersByUser = async (userUuid) => {
+        try {
+            const response = await fetch(`${API_GATEWAY}/api/order/user/${userUuid}`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setSelectedUser(userUuid);
+            setOrders(data);
+        } catch (error) {
+            console.error("Ошибка при загрузке заказов:", error);
+        }
+    };
+
     const handleConfirm = async (orderUUID) => {
         try {
             const response = await fetch(`${API_GATEWAY}/api/order/${orderUUID}/confirm`, {
@@ -48,14 +73,14 @@ const AdminPanel = () => {
             });
 
             if (response.ok) {
-                alert("Заказ подтвержден!");
-                // здесь надо еще обновлять сам заказ
+                showToast("Заказ подтвержден!");
+                await fetchOrdersByUser(selectedUser);
             } else {
-                alert("Ошибка при подтверждении заказа");
+                showToast("Ошибка при подтверждении заказа");
             }
         } catch (error) {
             console.error(error);
-            alert("Ошибка сервера при подтверждении");
+            showToast("Ошибка сервера при подтверждении");
         }
     };
 
@@ -70,18 +95,17 @@ const AdminPanel = () => {
             });
 
             if (response.ok) {
-                alert("Заказ закрыт!");
-                // здесь тоже надо еще обновлять сам заказ
+                showToast("Заказ закрыт!");
+                await fetchOrdersByUser(selectedUser);
             } else {
-                alert("Ошибка при закрытии заказа");
+                showToast("Ошибка при закрытии заказа");
             }
         } catch (error) {
             console.error(error);
-            alert("Ошибка сервера при закрытии");
+            showToast("Ошибка сервера при закрытии");
         }
     };
 
-    //здесь функцию из ордер пейдж надо вытащить
     const groupItemsByUUID = (items) => {
         const grouped = {};
         items.forEach(item => {
@@ -95,24 +119,7 @@ const AdminPanel = () => {
     };
 
     const handleUserClick = (userUuid) => {
-        fetch(`${API_GATEWAY}/api/order/user/${userUuid}`, {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Ошибка сервера: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                setSelectedUser(userUuid);
-                setOrders(data);
-            })
-            .catch(error => console.error("Ошибка при загрузке заказов:", error));
+        fetchOrdersByUser(userUuid);
     };
 
     const handleBack = () => {
@@ -124,8 +131,11 @@ const AdminPanel = () => {
         <AdminContainer>
             {selectedUser ? (
                 <>
-                    <BackButton onClick={handleBack}>← Назад к пользователям</BackButton>
-                    <h2>Заказы пользователя</h2>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+                        <StyledPageTitle>Заказы пользователя</StyledPageTitle>
+                        <BackButton onClick={handleBack}>Назад к пользователям</BackButton>
+                    </div>
+
                     <OrderList>
                         {orders.map((order) => (
                             <OrderItem key={order.uuid}>
@@ -137,7 +147,6 @@ const AdminPanel = () => {
                                     <span>Адрес: {order.address}</span>
                                     <span>Сумма: {order.sum}</span>
                                     <span>Статус: {order.status}</span>
-                                    <span>Покупатель: {}</span>
                                 </OrderInfo>
 
                                 <ActionButtons>
@@ -148,6 +157,7 @@ const AdminPanel = () => {
                                         Закрыть
                                     </ActionButton>
                                 </ActionButtons>
+
                                 <InventoryList>
                                     {groupItemsByUUID(order.inventories).map((item) => (
                                         <InventoryItem key={item.uuid}>
@@ -164,7 +174,12 @@ const AdminPanel = () => {
                 </>
             ) : (
                 <>
-                    <h2>Пользователи</h2>
+                    <div style={{ display: "flex", alignItems: "center", marginBottom: "20px" }}>
+                        <StyledPageTitle>Пользователи</StyledPageTitle>
+                        <div style={{ marginLeft: "auto" }}>
+                            <BackButtonToMainPage />
+                        </div>
+                    </div>
                     <UserList>
                         {users.map((user) => (
                             <UserItem key={user.uuid} onClick={() => handleUserClick(user.uuid)}>

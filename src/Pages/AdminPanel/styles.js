@@ -48,14 +48,39 @@ export const BackButton = styled.button`
     background: #0d6efd;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 14px;
-    margin-bottom: 20px;
+    font-size: 16px;
+    margin-bottom: 0;
     transition: background 0.3s ease;
-    
+
     &:hover {
         background: #0b5ed7;
+    }
+`;
+
+export const StyledPageTitle = styled.h1`
+    font-size: 32px;
+    color: #2c3e50;
+    margin-bottom: 24px;
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+    
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: #0d6efd;
+        border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 26px;
     }
 `;
