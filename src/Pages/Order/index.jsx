@@ -13,7 +13,7 @@ import {
 } from "./styles";
 
 import { API_GATEWAY, API_ENDPOINTS } from '../../config';
-import BackButton from "../../components/ReturnButton";
+import BackButtonToMainPage from "../../components/ReturnButton";
 import { useToast } from "../../context/ToastContext";
 
 const daysUntilStartDate = (fromDate) => {
@@ -123,7 +123,7 @@ const Orders = () => {
         <StyledPageContainer>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
                 <StyledPageTitle>Мои Заказы</StyledPageTitle>
-                <BackButton />
+                <BackButtonToMainPage />
             </div>
             {orders.length === 0 ? (
                 <StyledStatusMessage>Заказов пока нет</StyledStatusMessage>
