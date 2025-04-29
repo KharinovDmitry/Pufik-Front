@@ -23,11 +23,17 @@ import AdminButton from "../../components/AdminButton";
 
 const Home = () => {
     const { inventory, loading, error, categories } = useInventory();
-    const { addItem, items, totalSum } = useCartActions();
+    const { addItem, items } = useCartActions();
     const [activeFilter, setActiveFilter] = useState('all');
     const [sortBy, setSortBy] = useState('price-asc');
     const { user } = useAuth();
     const { isCartOpen, actions: { toggleCart } } = useCart();
+
+    const totalItems = items.reduce((sum, item) => sum + item.count, 0);
+    const totalSum = items.reduce(
+        (sum, item) => sum + (item.inventory?.cost_per_day || 0) * item.count,
+        0
+    );
 
     const handleAddToCart = (inventoryId) => {
         addItem(inventoryId);
@@ -74,7 +80,7 @@ const Home = () => {
             {items.length > 0 && (
                 <CartSummary>
                     <div>
-                        <span>В корзине: {items.reduce((sum, item) => sum + item.count, 0)} шт.</span>
+                        <span>В корзине: {totalItems} шт.</span>
                         <span>На сумму: {totalSum} ₽</span>
                     </div>
                     <CartSummaryButton onClick={toggleCart}>
