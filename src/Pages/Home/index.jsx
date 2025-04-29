@@ -37,8 +37,8 @@ const Home = () => {
     const filteredItems = inventory
         .filter(item => activeFilter === 'all' || item.status === activeFilter)
         .sort((a, b) => {
-            if (sortBy === 'price-asc') return a.cost_per_day - b.cost_per_day;
-            if (sortBy === 'price-desc') return b.cost_per_day - a.cost_per_day;
+            if (sortBy === 'price-asc') return a.costPerDay - b.costPerDay;
+            if (sortBy === 'price-desc') return b.costPerDay - a.costPerDay;
             return 0;
         });
 
