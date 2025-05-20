@@ -107,6 +107,17 @@ const Orders = () => {
         return orders.sort((a, b) => new Date(a.from_date) - new Date(b.from_date));
     };
 
+    const translateStatus = (status) => {
+        switch (status) {
+            case "подтвержден":
+                return "в пути";
+            case "завершен":
+                return "находится в аренде";
+            default:
+                return status;
+        }
+    };
+
     const groupItemsByUUID = (items) => {
         const grouped = {};
         items.forEach(item => {
@@ -138,7 +149,7 @@ const Orders = () => {
                                 </span>
                                 <span>Адрес: {order.address}</span>
                                 <span>Сумма: {order.sum}</span>
-                                <span>Статус: {order.status}</span>
+                                <span>Статус: {translateStatus(order.status)}</span>
                                 {role === "buyer" && <span>Номер: {userPhone}</span>}
                                 {role === "buyer" && (
                                     <ActionButtons>

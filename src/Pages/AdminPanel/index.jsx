@@ -40,6 +40,17 @@ const AdminPanel = () => {
             .catch(error => console.error("Ошибка при загрузке пользователей:", error));
     }, [token]);
 
+    const translateStatus = (status) => {
+        switch (status) {
+            case "подтвержден":
+                return "в пути";
+            case "завершен":
+                return "находится в аренде";
+            default:
+                return status;
+        }
+    };
+
     const fetchOrdersByUser = async (userUuid) => {
         try {
             const response = await fetch(`${API_GATEWAY}/api/order/user/${userUuid}`, {
@@ -62,6 +73,14 @@ const AdminPanel = () => {
         }
     };
 
+    const updateOrderStatusLocally = (orderUUID, newStatus) => {
+        setOrders(prevOrders =>
+            prevOrders.map(order =>
+                order.uuid === orderUUID ? { ...order, status: newStatus } : order
+            )
+        );
+    };
+
     const handleConfirm = async (orderUUID) => {
         try {
             const response = await fetch(`${API_GATEWAY}/api/order/${orderUUID}/confirm`, {
@@ -71,10 +90,11 @@ const AdminPanel = () => {
                     "Content-Type": "application/json"
                 }
             });
+            console.log(response);
 
             if (response.ok) {
                 showToast("Заказ подтвержден!");
-                await fetchOrdersByUser(selectedUser);
+                updateOrderStatusLocally(orderUUID, "в пути");
             } else {
                 showToast("Ошибка при подтверждении заказа");
             }
@@ -96,7 +116,7 @@ const AdminPanel = () => {
 
             if (response.ok) {
                 showToast("Заказ закрыт!");
-                await fetchOrdersByUser(selectedUser);
+                updateOrderStatusLocally(orderUUID, "находится в аренде");
             } else {
                 showToast("Ошибка при закрытии заказа");
             }
@@ -146,7 +166,7 @@ const AdminPanel = () => {
                                     </span>
                                     <span>Адрес: {order.address}</span>
                                     <span>Сумма: {order.sum}</span>
-                                    <span>Статус: {order.status}</span>
+                                    <span>Статус: {translateStatus(order.status)}</span>
                                 </OrderInfo>
 
                                 <ActionButtons>
