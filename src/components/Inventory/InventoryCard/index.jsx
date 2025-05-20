@@ -14,6 +14,21 @@ const InventoryCard = ({ item, onAddToCart }) => {
     return (
         <CardContainer $available={isAvailable}>
             <CardBody>
+                <div style={{
+                    width: '100%',
+                    height: '150px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    fontSize: '48px',
+                    color: '#6c757d',
+                    marginBottom: '16px'
+                }}>
+                    🛍️
+                </div>
+
                 <CardTitle>{item.name}</CardTitle>
                 <CardStatus $status={item.status}>
                     {item.status}

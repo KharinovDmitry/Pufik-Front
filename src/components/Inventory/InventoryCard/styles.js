@@ -62,3 +62,21 @@ export const AddButton = styled.button`
     background: ${props => props.disabled ? '#f5f5f5' : '#0b5ed7'};
   }
 `;
+
+export const ImagePlaceholder = styled.div`
+  width: 100%;
+  padding-bottom: 100%; /* квадрат */
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+
+  img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* или cover, зависит от дизайна */
+    object-position: center;
+  }
+`;
