@@ -90,7 +90,6 @@ const AdminPanel = () => {
                     "Content-Type": "application/json"
                 }
             });
-            console.log(response);
 
             if (response.ok) {
                 showToast("Заказ подтвержден!");
@@ -147,6 +146,8 @@ const AdminPanel = () => {
         setOrders([]);
     };
 
+    const statusOrder = ["создан", "в пути", "находится в аренде"];
+
     return (
         <AdminContainer>
             {selectedUser ? (
@@ -156,41 +157,50 @@ const AdminPanel = () => {
                         <BackButton onClick={handleBack}>Назад к пользователям</BackButton>
                     </div>
 
-                    <OrderList>
-                        {orders.map((order) => (
-                            <OrderItem key={order.uuid}>
-                                <OrderInfo>
-                                    <span>
-                                        Срок: с {new Date(order.from_date).toLocaleDateString("ru-RU")} по{" "}
-                                        {new Date(order.to_date).toLocaleDateString("ru-RU")}
-                                    </span>
-                                    <span>Адрес: {order.address}</span>
-                                    <span>Сумма: {order.sum}</span>
-                                    <span>Статус: {translateStatus(order.status)}</span>
-                                </OrderInfo>
+                    {statusOrder.map((statusKey) => {
+                        const filtered = orders.filter(o => translateStatus(o.status) === statusKey);
+                        if (filtered.length === 0) return null;
 
-                                <ActionButtons>
-                                    <ActionButton onClick={() => handleConfirm(order.uuid)}>
-                                        Подтвердить
-                                    </ActionButton>
-                                    <ActionButton onClick={() => handleClose(order.uuid)}>
-                                        Закрыть
-                                    </ActionButton>
-                                </ActionButtons>
+                        return (
+                            <div key={statusKey} style={{ marginBottom: "30px" }}>
+                                <h3>{statusKey[0].toUpperCase() + statusKey.slice(1)}</h3>
+                                <OrderList>
+                                    {filtered.map((order) => (
+                                        <OrderItem key={order.uuid}>
+                                            <OrderInfo>
+                                                <span>
+                                                    Срок: с {new Date(order.from_date).toLocaleDateString("ru-RU")} по{" "}
+                                                    {new Date(order.to_date).toLocaleDateString("ru-RU")}
+                                                </span>
+                                                <span>Адрес: {order.address}</span>
+                                                <span>Сумма: {order.sum}</span>
+                                                <span>Статус: {translateStatus(order.status)}</span>
+                                            </OrderInfo>
 
-                                <InventoryList>
-                                    {groupItemsByUUID(order.inventories).map((item) => (
-                                        <InventoryItem key={item.uuid}>
-                                            <span className="name">{item.name}</span>
-                                            <span>Стоимость в день: {item.cost_per_day} р.</span>
-                                            <span>Количество: {item.count}</span>
-                                        </InventoryItem>
+                                            <ActionButtons>
+                                                <ActionButton onClick={() => handleConfirm(order.uuid)}>
+                                                    Подтвердить
+                                                </ActionButton>
+                                                <ActionButton onClick={() => handleClose(order.uuid)}>
+                                                    Закрыть
+                                                </ActionButton>
+                                            </ActionButtons>
+
+                                            <InventoryList>
+                                                {groupItemsByUUID(order.inventories).map((item) => (
+                                                    <InventoryItem key={item.uuid}>
+                                                        <span className="name">{item.name}</span>
+                                                        <span>Стоимость в день: {item.cost_per_day} р.</span>
+                                                        <span>Количество: {item.count}</span>
+                                                    </InventoryItem>
+                                                ))}
+                                            </InventoryList>
+                                        </OrderItem>
                                     ))}
-                                </InventoryList>
-
-                            </OrderItem>
-                        ))}
-                    </OrderList>
+                                </OrderList>
+                            </div>
+                        );
+                    })}
                 </>
             ) : (
                 <>
