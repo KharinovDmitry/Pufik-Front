@@ -26,7 +26,20 @@ const InventoryCard = ({ item, onAddToCart }) => {
                     color: '#6c757d',
                     marginBottom: '16px'
                 }}>
-                    🛍️
+                    {item.image_url ? ( //посмотреть что в ответе и если что заменить imageUrl
+                        <img
+                            src={item.image_url} //посмотреть что в ответе и если что заменить imageUrl
+                            alt="Изображение товара"
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'cover',
+                                borderRadius: '8px'
+                            }}
+                        />
+                    ) : (
+                        '🛍️'
+                    )}
                 </div>
 
                 <CardTitle>{item.name}</CardTitle>
@@ -38,7 +51,7 @@ const InventoryCard = ({ item, onAddToCart }) => {
                     Доступно: {item.balance} шт.
                 </div>
                 <AddButton
-                    onClick={() => isAvailable && onAddToCart(item.id)}
+                    onClick={() => isAvailable && onAddToCart(item.id)} 
                     disabled={!isAvailable}
                 >
                     {isAvailable ? 'Добавить в корзину' : 'Нет в наличии'}
