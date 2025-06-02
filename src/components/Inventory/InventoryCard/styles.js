@@ -65,7 +65,7 @@ export const AddButton = styled.button`
 
 export const ImagePlaceholder = styled.div`
   width: 100%;
-  padding-bottom: 100%; /* квадрат */
+  padding-bottom: 100%;
   overflow: hidden;
   border-radius: 8px;
   position: relative;
@@ -76,7 +76,7 @@ export const ImagePlaceholder = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: contain; /* или cover, зависит от дизайна */
+    object-fit: contain; 
     object-position: center;
   }
 `;
